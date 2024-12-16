@@ -1,0 +1,39 @@
+SHELL := /bin/bash
+
+.PHONY: all setup update install-zsh switch-to-zsh setup-prezto update-zpreztorc update-zprofile
+
+all: setup
+
+setup: update install-zsh switch-to-zsh setup-prezto
+
+update:
+	@echo "Updating apt..."
+	@sudo apt update && sudo apt upgrade -y
+
+install-zsh:
+	@echo "Installing zsh..."
+	@sudo apt install zsh -y
+
+switch-to-zsh:
+	@echo "Switching to zsh..."
+	@echo 'exec zsh' >> ~/.bashrc
+	@source ~/.bashrc
+
+setup-prezto:
+	@echo "Setting up Prezto..."
+	@if [ ! -d "$$HOME/.zprezto" ]; then \
+		git clone --recursive https://github.com/sorin-ionescu/prezto.git "$$HOME/.zprezto"; \
+		for rcfile in "$$HOME/.zprezto/runcoms/"*; do \
+			ln -sf "$$rcfile" "$$HOME/.`basename $$rcfile`"; \
+		done; \
+	fi
+	@$(MAKE) update-zpreztorc
+
+update-zpreztorc:
+	@echo "Updating .zpreztorc..."
+	@awk -f update_zpreztorc.awk "$$HOME/.zpreztorc" > "$$HOME/.zpreztorc.new" && mv "$$HOME/.zpreztorc.new" "$$HOME/.zpreztorc"
+
+update-zprofile:
+	@echo "Updating .zprofile EDITOR and VISUAL..."
+	@sed -i "s/EDITOR='nano'/EDITOR='vim'/" "$$HOME/.zprofile"
+	@sed -i "s/VISUAL='nano'/VISUAL='vim'/" "$$HOME/.zprofile"
